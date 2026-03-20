@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="СімУА 3D">
+<meta name="theme-color" content="#0d0a1a">
+<meta name="description" content="Збудуй дім і живи у ньому — 3D гра в стилі Sims">
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22%D0%A1%D1%96%D0%BC%D0%A3%D0%90%203D%22%2C%22short_name%22%3A%22%D0%A1%D1%96%D0%BC%D0%A3%D0%90%22%2C%22description%22%3A%22%D0%97%D0%B1%D1%83%D0%B4%D1%83%D0%B9%20%D0%B4%D1%96%D0%BC%2C%20%D1%80%D0%BE%D0%B7%D1%81%D1%82%D0%B0%D0%B2%20%D0%BC%D0%B5%D0%B1%D0%BB%D1%96%2C%20%D0%B6%D0%B8%D0%B2%D0%B8%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22fullscreen%22%2C%22orientation%22%3A%22landscape%22%2C%22background_color%22%3A%22%230d0a1a%22%2C%22theme_color%22%3A%22%230d0a1a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520100%2520100'%253E%253Crect%2520width%3D'100'%2520height%3D'100'%2520fill%3D'%25230d0a1a'%2520rx%3D'20'%2F%253E%253Ctext%2520y%3D'.9em'%2520font-size%3D'85'%2520x%3D'10'%253E%25F0%259F%25A0%258F%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
+<title>СімУА 3D</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:#0d0a1a;color:#f0e8ff;font-family:'Segoe UI',sans-serif;overflow:hidden;width:100dvw;height:100dvh;user-select:none}
+/* Portrait warning */
+#portrait-hint{display:none;position:fixed;inset:0;background:#0d0a1a;z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:16px;color:#a78bfa;text-align:center;padding:20px}
+#portrait-hint .ico{font-size:48px}
+@media(orientation:portrait){#portrait-hint{display:flex}}
+/* Layout */
+#app{display:flex;width:100dvw;height:100dvh}
+/* Left sidebar: needs */
+#left{width:50px;flex-shrink:0;background:rgba(12,8,24,.96);border-right:1px solid #3a2858;display:flex;flex-direction:column;align-items:center;padding:6px 3px;gap:5px;z-index:10}
+#simNameV{font-size:7px;font-weight:700;color:#c084fc;writing-mode:vertical-rl;transform:rotate(180deg);max-height:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}
+.need{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:8px;color:#6b5a88}
+.nb{width:7px;height:40px;background:#1a1030;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.nf{width:100%;border-radius:3px;transition:height .6s}
+#moneyEl{font-size:7px;color:#fbbf24;font-weight:700;text-align:center;line-height:1.3;margin-top:auto;word-break:break-all}
+#modeBtn{background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;color:#fff;padding:3px 2px;border-radius:6px;font-size:7px;cursor:pointer;font-weight:700;text-align:center;width:42px;line-height:1.4;margin-top:3px}
+/* Canvas */
+#wrap{flex:1;position:relative;overflow:hidden;touch-action:none;min-width:0}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+/* Right sidebar: toolbar */
+#tb{width:136px;flex-shrink:0;background:rgba(12,8,24,.97);border-left:1px solid #3a2858;display:flex;flex-direction:column;overflow:hidden;z-index:10}
+#cats{display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none;flex-shrink:0;max-height:55%}
+#cats::-webkit-scrollbar{display:none}
+.cat{flex-shrink:0;padding:5px 8px;display:flex;align-items:center;font-size:10px;cursor:pointer;color:#6b5a88;border-bottom:1px solid #1e1438;white-space:nowrap;min-height:26px;line-height:1.2}
+.cat.on{color:#c084fc;background:rgba(168,85,247,.12);border-left:2px solid #a855f7;padding-left:6px}
+#rotBar{display:none;flex-direction:column;align-items:stretch;padding:5px 6px;gap:3px;border-bottom:1px solid #3a2858;background:rgba(109,40,217,.1);flex-shrink:0}
+#rotBar span{font-size:9px;color:#a78bfa;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rotBtn{background:#6d28d9;border:none;color:#fff;padding:4px;border-radius:6px;font-size:10px;cursor:pointer;width:100%}
+#items{display:flex;flex-direction:column;overflow-y:auto;padding:3px 4px;gap:2px;flex:1;scrollbar-width:none}
+#items::-webkit-scrollbar{display:none}
+.itm{display:flex;align-items:center;padding:5px 6px;border-radius:7px;cursor:pointer;background:rgba(255,255,255,.04);border:1.5px solid transparent;gap:5px;flex-shrink:0}
+.itm .ic{font-size:16px;flex-shrink:0;line-height:1}
+.itm .lblw{display:flex;flex-direction:column;gap:1px;min-width:0;font-size:9px;color:#6b5a88}
+.itm .pr{font-size:8px;color:#fbbf24}
+.itm.on{border-color:#a855f7;color:#c084fc;background:rgba(168,85,247,.12)}
+.itm.on .lblw{color:#c084fc}
+/* Clock */
+#clk{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);border:1px solid #3a2858;border-radius:12px;padding:2px 10px;font-size:11px;color:#a78bfa;pointer-events:none;z-index:50;white-space:nowrap}
+/* Toast */
+#toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);padding:5px 14px;border-radius:16px;font-size:11px;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:280px;text-align:center}
+/* Crosshair */
+#crosshair{position:absolute;top:50%;left:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none;display:none;z-index:60}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,.8);border-radius:1px}
+#crosshair::before{width:2px;height:18px;left:8px;top:0}
+#crosshair::after{width:18px;height:2px;top:8px;left:0}
+/* FPS controls — all fixed, positioned relative to viewport */
+#jWrap{position:fixed;bottom:12px;left:56px;width:96px;height:96px;display:none;z-index:100;touch-action:none}
+#jBase{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(168,85,247,.4)}
+#jKnob{position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(168,85,247,.65);border:2px solid #a855f7;left:30px;top:30px;pointer-events:none;box-shadow:0 0 12px rgba(168,85,247,.5)}
+#lookZone{position:fixed;top:0;bottom:0;left:160px;right:144px;display:none;z-index:90;touch-action:none}
+#interactBtn{position:fixed;bottom:68px;right:148px;width:52px;height:52px;border-radius:50%;background:rgba(168,85,247,.25);border:2px solid #a855f7;color:#fff;font-size:20px;display:none;align-items:center;justify-content:center;z-index:100;cursor:pointer}
+#interactBtn:active{background:rgba(168,85,247,.55)}
+#jumpBtn{position:fixed;bottom:10px;right:148px;width:52px;height:52px;border-radius:50%;background:rgba(96,165,250,.25);border:2px solid #60a5fa;color:#fff;font-size:18px;display:none;align-items:center;justify-content:center;z-index:100;cursor:pointer;font-weight:700}
+#jumpBtn:active{background:rgba(96,165,250,.55)}
+#nearbyLbl{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);border:1px solid #a855f7;border-radius:10px;padding:3px 12px;font-size:11px;color:#c084fc;pointer-events:none;display:none;z-index:100;white-space:nowrap}
+/* Modal */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:flex;align-items:center;justify-content:center}
+#modal.h{display:none}
+#mbox{background:linear-gradient(145deg,#12082a,#1e0f3a);border:1px solid #6d28d9;border-radius:18px;padding:24px 28px;width:380px;max-width:90vw;text-align:center;box-shadow:0 0 50px rgba(109,40,217,.35)}
+#mbox h2{color:#c084fc;font-size:20px;margin-bottom:4px}
+#mbox p{color:#6b5a88;font-size:12px;margin-bottom:12px}
+#nameIn{width:100%;padding:9px;border-radius:9px;border:1px solid #6d28d9;background:rgba(0,0,0,.45);color:#f0e8ff;font-size:14px;text-align:center;margin-bottom:10px;outline:none}
+#goBtn{width:100%;padding:11px;background:linear-gradient(135deg,#6d28d9,#a855f7);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="portrait-hint"><div class="ico">🔄</div>Поверни телефон горизонтально<br><small style="color:#3a2858;font-size:12px">Гра розрахована на landscape</small></div>
+<div id="modal"><div id="mbox">
+  <h2>🏠 СімУА 3D</h2>
+  <p>Збудуй дім, розстав меблі, живи від першої особи!</p>
+  <input id="nameIn" maxlength="16" placeholder="Ім'я персонажа..." value="Олексій">
+  <button id="goBtn">✨ Почати</button>
+</div></div>
+<div id="app">
+  <div id="left">
+    <div id="simNameV">Олексій</div>
+    <div class="need"><div class="nb"><div class="nf" id="nHunger" style="height:80%;background:#fbbf24"></div></div>🍕</div>
+    <div class="need"><div class="nb"><div class="nf" id="nEnergy" style="height:90%;background:#60a5fa"></div></div>⚡</div>
+    <div class="need"><div class="nb"><div class="nf" id="nHappy"  style="height:70%;background:#c084fc"></div></div>😊</div>
+    <div class="need"><div class="nb"><div class="nf" id="nHygiene"style="height:65%;background:#4ade80"></div></div>🚿</div>
+    <div class="need"><div class="nb"><div class="nf" id="nBladder"style="height:85%;background:#fb923c"></div></div>🚽</div>
+    <div id="moneyEl">💰<br>25k</div>
+    <button id="modeBtn">🔨<br>Буд.</button>
+  </div>
+  <div id="wrap">
+    <canvas id="c3d"></canvas>
+    <div id="clk">🕐 День 1 · 08:00</div>
+    <div id="crosshair"></div>
+    <div id="nearbyLbl"></div>
+    <div id="toast"></div>
+  </div>
+  <div id="tb">
+    <div id="cats">
+      <div id="rotBar"><span id="rotLbl">↔ Схід-Захід</span><button id="rotBtn">🔄 Повернути</button></div>
+    </div>
+    <div id="items"></div>
+  </div>
+</div>
+<div id="jWrap"><div id="jBase"></div><div id="jKnob"></div></div>
+<div id="lookZone"></div>
+<div id="interactBtn">🤝</div>
+<div id="jumpBtn">⬆</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+// ══════════════════════════════════════
+// CATALOG
+// ══════════════════════════════════════
+const CATS=[
+  {id:'build', lbl:'🧱 Будівництво'},
+  {id:'floors',lbl:'🪵 Підлога'},
+  {id:'kitchen',lbl:'🍳 Кухня'},
+  {id:'bedroom',lbl:'🛏 Спальня'},
+  {id:'bath',  lbl:'🚿 Ванна'},
+  {id:'living',lbl:'🛋 Вітальня'},
+  {id:'deco',  lbl:'🌸 Декор'},
+  {id:'move',  lbl:'✋ Перемістити'},
+  {id:'rotate',lbl:'🔄 Розвернути'},
+  {id:'erase', lbl:'❌ Знести'},
+];
+const CAT={
+  build:[
+    {id:'wall',   ic:'🧱',lbl:'Стіна',       cost:80, type:'wall',  col:0xc8b89a},
+    {id:'wall_w', ic:'🏳️',lbl:'Біла стіна',  cost:120,type:'wall',  col:0xf0ece4},
+    {id:'wall_br',ic:'🪵',lbl:'Дерев\'яна',  cost:150,type:'wall',  col:0x8b5e3c},
+    {id:'wall_st',ic:'🪨',lbl:'Кам\'яна',    cost:200,type:'wall',  col:0x7a7570},
+    {id:'door',   ic:'🚪',lbl:'Двері',        cost:300,type:'door',  col:0x6b3a1f},
+    {id:'window', ic:'🪟',lbl:'Вікно',        cost:200,type:'window',col:0x90c8e8},
+  ],
+  floors:[
+    {id:'fl_wood',ic:'🟫',lbl:'Паркет',      cost:60, type:'floor',col:0x8b6040,r:0.85,m:0.0},
+    {id:'fl_tile',ic:'⬜',lbl:'Плитка',      cost:80, type:'floor',col:0xdedad2,r:0.2, m:0.05},
+    {id:'fl_carp',ic:'🟥',lbl:'Килим черв.', cost:100,type:'floor',col:0x8b1a1a,r:1.0, m:0.0},
+    {id:'fl_grn', ic:'🟩',lbl:'Трава',       cost:30, type:'floor',col:0x3d7a35,r:1.0, m:0.0},
+    {id:'fl_mrb', ic:'🔲',lbl:'Мармур',      cost:180,type:'floor',col:0xede8e0,r:0.08,m:0.1},
+    {id:'fl_blue',ic:'🟦',lbl:'Килим синій', cost:100,type:'floor',col:0x1e3f7a,r:1.0, m:0.0},
+  ],
+  kitchen:[
+    {id:'fridge', ic:'🧊',lbl:'Холодильник', cost:900,type:'furn',need:'energy', val:25,col:0xd8e8ee,w:0.7,h:1.8,d:0.7},
+    {id:'stove',  ic:'🍳',lbl:'Плита',        cost:700,type:'furn',need:'hunger', val:35,col:0x2a2a2a,w:0.7,h:0.9,d:0.7},
+    {id:'sink',   ic:'🚰',lbl:'Мийка',        cost:500,type:'furn',need:'hygiene',val:15,col:0xb0b8c0,w:0.7,h:0.9,d:0.6},
+    {id:'cabinet',ic:'🗄️',lbl:'Тумба кухн.',  cost:400,type:'furn',col:0xc8a060,w:0.7,h:0.9,d:0.55},
+    {id:'table_k',ic:'🍽️',lbl:'Обідній стіл', cost:500,type:'furn',col:0x7a5030,w:1.2,h:0.76,d:0.8},
+    {id:'chair_k',ic:'🪑',lbl:'Стілець',       cost:150,type:'furn',col:0x5a3010,w:0.45,h:0.9,d:0.45},
+  ],
+  bedroom:[
+    {id:'bed_s',  ic:'🛏️',lbl:'Ліжко одно.',  cost:800, type:'furn',need:'energy',val:55,col:0x4a3020,w:1.0,h:0.55,d:2.1},
+    {id:'bed_d',  ic:'🛌',lbl:'Двоспальне',   cost:1400,type:'furn',need:'energy',val:70,col:0x3a2010,w:1.65,h:0.55,d:2.1},
+    {id:'wardrobe',ic:'🗄️',lbl:'Гардероб',    cost:600, type:'furn',col:0x5a3a18,w:1.2,h:2.1,d:0.62},
+    {id:'mirror', ic:'🪞',lbl:'Дзеркало',      cost:250, type:'furn',need:'hygiene',val:10,col:0x111130,w:0.55,h:1.5,d:0.08},
+    {id:'lamp_n', ic:'💡',lbl:'Нічник',        cost:120, type:'furn',col:0xf5e890,w:0.28,h:0.5,d:0.28,glow:0xffee88},
+    {id:'desk',   ic:'🖥️',lbl:'Письм. стіл',  cost:700, type:'furn',col:0x7a5030,w:1.2,h:0.76,d:0.6},
+  ],
+  bath:[
+    {id:'toilet', ic:'🚽',lbl:'Унітаз',        cost:500, type:'furn',need:'bladder',val:45,col:0xf5f5f5,w:0.42,h:0.82,d:0.72},
+    {id:'shower', ic:'🚿',lbl:'Душова кабіна', cost:800, type:'furn',need:'hygiene',val:55,col:0xadd8e6,w:0.9,h:2.1,d:0.9},
+    {id:'bathtub',ic:'🛁',lbl:'Ванна',          cost:1200,type:'furn',need:'hygiene',val:70,col:0xfafafa,w:0.8,h:0.65,d:1.75},
+    {id:'sink_b', ic:'🚰',lbl:'Умивальник',     cost:400, type:'furn',need:'hygiene',val:22,col:0xfafafa,w:0.52,h:0.88,d:0.42},
+  ],
+  living:[
+    {id:'sofa',   ic:'🛋️',lbl:'Диван',          cost:1100,type:'furn',need:'happy',val:22,col:0x5c4888,w:2.1,h:0.82,d:0.92},
+    {id:'tv',     ic:'📺',lbl:'Телевізор',      cost:1500,type:'furn',need:'happy',val:32,col:0x101010,w:1.65,h:1.05,d:0.1,glow:0x0022cc},
+    {id:'tv_st',  ic:'📦',lbl:'ТВ тумба',       cost:300, type:'furn',col:0x3a2010,w:1.65,h:0.48,d:0.4},
+    {id:'booksh', ic:'📚',lbl:'Книжкова полиця',cost:500, type:'furn',need:'happy',val:12,col:0x5a3818,w:1.0,h:1.85,d:0.32},
+    {id:'coffee', ic:'☕',lbl:'Кавовий столик', cost:400, type:'furn',col:0x3a2010,w:1.0,h:0.44,d:0.62},
+    {id:'piano',  ic:'🎹',lbl:'Піаніно',        cost:2500,type:'furn',need:'happy',val:38,col:0x0e0e0e,w:1.45,h:1.1,d:0.62},
+  ],
+  deco:[
+    {id:'plant',  ic:'🌿',lbl:'Рослина',        cost:120, type:'furn',col:0x2a6a2a,w:0.5,h:1.2,d:0.5},
+    {id:'flower', ic:'🌸',lbl:'Квітка',         cost:70,  type:'furn',col:0xff70b0,w:0.28,h:0.38,d:0.28},
+    {id:'lamp_f', ic:'🕯️',lbl:'Торшер',         cost:200, type:'furn',col:0xf5f0c0,w:0.28,h:1.65,d:0.28,glow:0xffee55},
+    {id:'rug',    ic:'🟥',lbl:'Великий килим',  cost:200, type:'furn',col:0xaa2020,w:2.1,h:0.03,d:1.55},
+    {id:'painting',ic:'🖼️',lbl:'Картина',       cost:350, type:'furn',col:0x6a3010,w:1.0,h:0.8,d:0.06},
+  ],
+  erase:[{id:'erase',ic:'❌',lbl:'Знести',cost:0,type:'erase'}],
+  move:[{id:'move',ic:'✋',lbl:'Обери предмет',cost:0,type:'move'}],
+};
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let mode='build', activeCat='build', activeTool=null, wallRot=0;
+// Move mode state
+let moveSelected=null;
+let moveGhost=null;
+let rotateSelected=null; // {key, layer} — item picked for rotation
+let money=25000, simName='Олексій';
+let needs={hunger:80,energy:90,happy:70,hygiene:65,bladder:85};
+let gameHour=8,gameMin=0,gameDay=1,gameSpeed=1,lastTick=Date.now();
+let simAction=null,simActionTimer=0;
+
+const floorL={}, wallL={}, objL={};
+const solidSet=new Set();
+
+// ══════════════════════════════════════
+// THREE SETUP
+// ══════════════════════════════════════
+const canvas=document.getElementById('c3d');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+scene.fog=new THREE.Fog(0x87ceeb,20,45);
+
+const camera=new THREE.PerspectiveCamera(70,1,0.05,60);
+const wrap=document.getElementById('wrap');
+function resize(){
+  const W=wrap.clientWidth,H=wrap.clientHeight;
+  renderer.setSize(W,H); camera.aspect=W/H; camera.updateProjectionMatrix();
+}
+resize(); new ResizeObserver(resize).observe(wrap);
+
+// Lights
+const ambL=new THREE.AmbientLight(0xfff8f0,0.55); scene.add(ambL);
+const sun=new THREE.DirectionalLight(0xfff5e0,1.1);
+sun.position.set(8,16,10); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-18; sun.shadow.camera.right=18;
+sun.shadow.camera.top=18; sun.shadow.camera.bottom=-18;
+sun.shadow.camera.far=60; sun.shadow.bias=-0.001;
+scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xb0d8ff,0x3a5020,0.3));
+const warmPt=new THREE.PointLight(0xffaa44,0.6,14);
+warmPt.position.set(0,2.5,0); scene.add(warmPt);
+
+// Ground
+const gnd=new THREE.Mesh(new THREE.PlaneGeometry(40,40),
+  new THREE.MeshStandardMaterial({color:0x3a6e30,roughness:0.95,metalness:0}));
+gnd.rotation.x=-Math.PI/2; gnd.receiveShadow=true; scene.add(gnd);
+const plot=new THREE.Mesh(new THREE.PlaneGeometry(16,16),
+  new THREE.MeshStandardMaterial({color:0x4a8040,roughness:0.9,metalness:0}));
+plot.rotation.x=-Math.PI/2; plot.position.y=0.005; plot.receiveShadow=true; scene.add(plot);
+const grid=new THREE.GridHelper(16,16,0x5a9050,0x5a9050);
+grid.position.y=0.01; grid.material.opacity=0.28; grid.material.transparent=true; scene.add(grid);
+
+// ══════════════════════════════════════
+// MESH BUILDERS
+// ══════════════════════════════════════
+const WALL_H=2.5,WALL_T=0.14;
+function smat(col,r=0.75,m=0){return new THREE.MeshStandardMaterial({color:col,roughness:r,metalness:m});}
+
+function buildWall(data,gx,gz,rot){
+  // rot 0 = E-W wall: runs along X, placed at NORTH edge of cell → z = gz
+  // rot 1 = N-S wall: runs along Z, placed at EAST edge of cell  → x = gx+1
+  const px = rot===0 ? gx+0.5 : gx+1;
+  const pz = rot===0 ? gz      : gz+0.5;
+
+  if(data.type==='wall'){
+    const geo=rot===0
+      ? new THREE.BoxGeometry(1,WALL_H,WALL_T)
+      : new THREE.BoxGeometry(WALL_T,WALL_H,1);
+    const m=new THREE.Mesh(geo,smat(data.col||0xc8b89a,0.85));
+    m.position.set(px,WALL_H/2,pz);
+    m.castShadow=true;m.receiveShadow=true;
+    return m;
+  }
+  const grp=new THREE.Group();
+  const wmat=smat(data.col||0xc8b89a,0.85);
+  if(data.type==='door'){
+    [-0.43,0.43].forEach(off=>{
+      const p=new THREE.Mesh(new THREE.BoxGeometry(rot===0?0.14:WALL_T,WALL_H,rot===0?WALL_T:0.14),wmat);
+      p.position.set(rot===0?off:0,WALL_H/2,rot===0?0:off); grp.add(p);
+    });
+    const ln=new THREE.Mesh(new THREE.BoxGeometry(rot===0?1:WALL_T,0.18,rot===0?WALL_T:1),wmat);
+    ln.position.y=WALL_H-0.09; grp.add(ln);
+    const dp=new THREE.Mesh(new THREE.BoxGeometry(rot===0?0.72:WALL_T+0.02,WALL_H-0.22,rot===0?WALL_T+0.02:0.72),smat(0x7a4010,0.8));
+    dp.position.set(rot===0?-0.1:0.01,(WALL_H-0.22)/2,rot===0?0.01:-0.1); grp.add(dp);
+    const hh=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8),smat(0xd4a020,0.3,0.8));
+    hh.position.set(rot===0?0.2:0.09,(WALL_H-0.22)/2,rot===0?0.09:0.2); grp.add(hh);
+  } else {
+    const W=rot===0?1:WALL_T,D=rot===0?WALL_T:1;
+    const bot=new THREE.Mesh(new THREE.BoxGeometry(W,0.35,D),wmat); bot.position.y=0.175; grp.add(bot);
+    const top=new THREE.Mesh(new THREE.BoxGeometry(W,0.5,D),wmat); top.position.y=WALL_H-0.25; grp.add(top);
+    [-0.43,0.43].forEach(off=>{
+      const s=new THREE.Mesh(new THREE.BoxGeometry(rot===0?0.13:WALL_T,WALL_H-0.85,rot===0?WALL_T:0.13),wmat);
+      s.position.set(rot===0?off:0,WALL_H/2,rot===0?0:off); grp.add(s);
+    });
+    const gm=new THREE.MeshStandardMaterial({color:0x88d0f0,roughness:0.05,metalness:0.1,transparent:true,opacity:0.35});
+    const gl=new THREE.Mesh(new THREE.BoxGeometry(rot===0?0.7:0.05,WALL_H-0.85,rot===0?0.05:0.7),gm);
+    gl.position.y=WALL_H/2; grp.add(gl);
+  }
+  grp.position.set(px,0,pz); return grp;
+}
+
+function buildFloor(data,gx,gz){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(1,0.07,1),
+    new THREE.MeshStandardMaterial({color:data.col||0x8b6040,roughness:data.r??0.85,metalness:data.m??0}));
+  m.position.set(gx+0.5,0.035,gz+0.5); m.receiveShadow=true; return m;
+}
+
+function buildFurn(data,gx,gz,rot){
+  const grp=new THREE.Group();
+  const W=data.w||0.8,H=data.h||0.8,D=data.d||0.8;
+  const BW=rot===0?W:D, BD=rot===0?D:W;
+  const mat=smat(data.col||0x888888,0.75);
+
+  if(data.id!=='plant'&&data.id!=='flower'&&data.id!=='lamp_f'&&data.id!=='lamp_n'){
+    const body=new THREE.Mesh(new THREE.BoxGeometry(BW,H,BD),mat);
+    body.position.y=H/2; body.castShadow=true; body.receiveShadow=true; grp.add(body);
+    // Table legs
+    if(data.id==='table_k'||data.id==='coffee'||data.id==='desk'){
+      body.scale.y=0.1; body.position.y=H-0.05;
+      const lmat=smat(new THREE.Color(data.col).addScalar(-0.1).getHex(),0.8);
+      [[BW/2-0.06,-BD/2+0.06],[BW/2-0.06,BD/2-0.06],[-BW/2+0.06,-BD/2+0.06],[-BW/2+0.06,BD/2-0.06]].forEach(([lx,lz])=>{
+        const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,H*0.9,8),lmat);
+        leg.position.set(lx,H*0.45,lz); grp.add(leg);
+      });
+    }
+    // Sofa
+    if(data.id==='sofa'){
+      const bm=smat(new THREE.Color(data.col).addScalar(0.08).getHex(),0.9);
+      const bk=new THREE.Mesh(new THREE.BoxGeometry(BW,H*0.6,0.18),bm);
+      bk.position.set(0,H*0.72,-BD/2+0.09); grp.add(bk);
+      [-BW/2+0.09,BW/2-0.09].forEach(ax=>{
+        const arm=new THREE.Mesh(new THREE.BoxGeometry(0.18,H*0.4,BD),bm);
+        arm.position.set(ax,H*0.55,0); grp.add(arm);
+      });
+    }
+    // Bed
+    if(data.id==='bed_s'||data.id==='bed_d'){
+      const hm=smat(new THREE.Color(data.col).addScalar(-0.08).getHex(),0.85);
+      const hd=new THREE.Mesh(new THREE.BoxGeometry(BW,0.55,0.1),hm);
+      hd.position.set(0,H/2+0.28,-BD/2+0.05); grp.add(hd);
+      const pm=smat(0xffffff,0.9);
+      const np=data.id==='bed_d'?2:1;
+      for(let i=0;i<np;i++){
+        const pil=new THREE.Mesh(new THREE.BoxGeometry(BW/(np+0.3),0.1,0.3),pm);
+        pil.position.set(np===2?(i===0?-BW*0.2:BW*0.2):0,H+0.05,-BD/2+0.2); grp.add(pil);
+      }
+      const blk=new THREE.Mesh(new THREE.BoxGeometry(BW*0.96,0.07,BD*0.52),smat(0x7a3a8a,0.95));
+      blk.position.set(0,H+0.035,BD*0.1); grp.add(blk);
+    }
+    // Glow
+    if(data.glow){
+      const gm=new THREE.MeshStandardMaterial({color:data.glow,emissive:new THREE.Color(data.glow),emissiveIntensity:0.7,roughness:0.5});
+      const face=new THREE.Mesh(new THREE.BoxGeometry(BW*0.88,H*0.78,0.02),gm);
+      face.position.set(0,H/2,-BD/2-0.01); grp.add(face);
+      const pt=new THREE.PointLight(new THREE.Color(data.glow),0.45,3.5);
+      pt.position.set(0,H/2,-BD/2-0.6); grp.add(pt);
+    }
+  }
+  // Plant
+  if(data.id==='plant'){
+    grp.add(new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.12,0.24,12),smat(0xb04820,0.8))).position.y=0.12;
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.5,8),smat(0x3a7a30,0.9));
+    stem.position.y=0.49; grp.add(stem);
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(0.32,10,10),smat(0x2a8a2a,0.9));
+    leaf.scale.y=0.75; leaf.position.y=0.85; grp.add(leaf);
+  }
+  // Flower
+  if(data.id==='flower'){
+    const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.08,0.16,10),smat(0xb04820,0.8));
+    pot.position.y=0.08; grp.add(pot);
+    const st=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.3,6),smat(0x3a7a30,0.9));
+    st.position.y=0.26; grp.add(st);
+    const pm=smat(data.col||0xff70b0,0.8);
+    for(let i=0;i<6;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(0.07,7,7),pm);const a=i/6*Math.PI*2;p.position.set(Math.cos(a)*0.1,0.4,Math.sin(a)*0.1);grp.add(p);}
+    const c=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8),smat(0xffee00,0.8));c.position.y=0.42;grp.add(c);
+  }
+  // Lamps
+  if(data.id==='lamp_f'||data.id==='lamp_n'){
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.15,0.08,12),smat(0x888888,0.4,0.5));
+    base.position.y=0.04; grp.add(base);
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,H-0.12,8),smat(0x888888,0.4,0.6));
+    pole.position.y=H/2; grp.add(pole);
+    const shade=new THREE.Mesh(new THREE.ConeGeometry(data.id==='lamp_f'?0.22:0.14,0.25,12,1,true),smat(data.col||0xf5f0c0,0.8));
+    shade.position.y=H-0.03; grp.add(shade);
+    if(data.glow){const pt=new THREE.PointLight(new THREE.Color(data.glow),0.6,4);pt.position.y=H-0.1;grp.add(pt);}
+  }
+  // Apply Y rotation: 0=0° 1=90° 2=180° 3=270°
+  grp.rotation.y = -rot * Math.PI/2;
+  grp.position.set(gx+0.5,0,gz+0.5); return grp;
+}
+// ══════════════════════════════════════
+function ck(gx,gz){return gx+','+gz;}
+
+function placeItem(gx,gz,data,rot=0,free=false){
+  if(gx<-8||gx>=8||gz<-8||gz>=8)return;
+  if(!free){
+    if(money<data.cost){toast('❌ Мало грошей!','#f87171');return;}
+    money-=data.cost; updateMoney();
+  }
+  const key=ck(gx,gz);
+  if(data.type==='floor'){
+    if(floorL[key]){scene.remove(floorL[key]);}
+    floorL[key]=buildFloor(data,gx,gz); scene.add(floorL[key]);
+  } else if(data.type==='wall'||data.type==='door'||data.type==='window'){
+    if(wallL[key]){
+      scene.remove(wallL[key].mesh);
+      // remove from wallSolid by filtering
+      const wi=wallSolid.indexOf(wallL[key].solid);
+      if(wi!==-1)wallSolid.splice(wi,1);
+    }
+    const mesh=buildWall(data,gx,gz,rot);
+    scene.add(mesh);
+    let solid=null;
+    if(data.type==='wall'){addWallSolid(data,gx,gz,rot);solid=wallSolid[wallSolid.length-1];}
+    wallL[key]={mesh,data,rot,solid};
+  } else if(data.type==='furn'){
+    if(objL[key]){scene.remove(objL[key].mesh);furnSolid.delete(key);}
+    const mesh=buildFurn(data,gx,gz,rot);
+    scene.add(mesh); objL[key]={mesh,data,rot,gx,gz};
+    const fw=rot%2===0?data.w:data.d, fd=rot%2===0?data.d:data.w;
+    if((fw||0)>0.5&&(fd||0)>0.5&&(data.h||0)>0.38) furnSolid.add(key);
+  }
+  if(!free) toast('✅ '+data.ic+' '+data.lbl,'#4ade80');
+}
+
+function eraseCell(gx,gz){
+  const key=ck(gx,gz); let ref=0;
+  if(objL[key]){scene.remove(objL[key].mesh);ref+=objL[key].data.cost||0;delete objL[key];furnSolid.delete(key);}
+  if(wallL[key]){
+    scene.remove(wallL[key].mesh);ref+=wallL[key].data.cost||0;
+    const wi=wallSolid.indexOf(wallL[key].solid);
+    if(wi!==-1)wallSolid.splice(wi,1);
+    delete wallL[key];
+  }
+  if(floorL[key]){scene.remove(floorL[key]);ref+=60;delete floorL[key];}
+  if(ref){money+=Math.floor(ref*0.4);updateMoney();toast('🗑️ Знесено','#a78bfa');}
+}
+
+// ══════════════════════════════════════
+// CHARACTER
+// ══════════════════════════════════════
+const simGrp=new THREE.Group();
+const torso=new THREE.Mesh(new THREE.BoxGeometry(0.38,0.52,0.22),smat(0x4a90e2,0.8));
+torso.position.y=0.82; torso.castShadow=true; simGrp.add(torso);
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,12),smat(0xffcc99,0.85));
+head.position.y=1.38; head.castShadow=true; simGrp.add(head);
+const hair=new THREE.Mesh(new THREE.SphereGeometry(0.21,12,8),smat(0x3a2200,0.9));
+hair.scale.y=0.55; hair.position.set(0,1.5,0); simGrp.add(hair);
+[[-0.08],[0.08]].forEach(([ex])=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.034,6,6),smat(0x111111,0.5));e.position.set(ex,1.36,0.18);simGrp.add(e);});
+[-0.1,0.1].forEach((lx,i)=>{const l=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.5,0.17),smat(0x224488,0.8));l.position.set(lx,0.25,0);l.name='leg'+i;l.castShadow=true;simGrp.add(l);});
+[-0.26,0.26].forEach((ax,i)=>{const a=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.42,0.15),smat(0x4a90e2,0.8));a.position.set(ax,0.82,0);a.name='arm'+i;a.rotation.z=(i===0?1:-1)*0.18;a.castShadow=true;simGrp.add(a);});
+
+function makeSprite(txt){
+  const cv=document.createElement('canvas');cv.width=256;cv.height=60;
+  const c=cv.getContext('2d');
+  c.fillStyle='rgba(0,0,0,.6)';c.beginPath();c.roundRect(4,4,248,52,12);c.fill();
+  c.font='bold 26px Segoe UI';c.fillStyle='#c084fc';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,128,30);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true}));
+  sp.scale.set(1.7,0.4,1);sp.position.y=1.85;sp.name='nsp';return sp;
+}
+simGrp.add(makeSprite('Олексій'));
+simGrp.position.set(1.5,0,5.5);
+scene.add(simGrp);
+
+// ══════════════════════════════════════
+// ORBIT CAMERA
+// ══════════════════════════════════════
+let oTheta=0.8,oPhi=0.9,oR=16;
+const oTgt=new THREE.Vector3(0,0,0);
+function applyOrbit(){
+  camera.position.set(oTgt.x+oR*Math.sin(oPhi)*Math.sin(oTheta),oTgt.y+oR*Math.cos(oPhi),oTgt.z+oR*Math.sin(oPhi)*Math.cos(oTheta));
+  camera.lookAt(oTgt);
+}
+applyOrbit();
+
+// ══════════════════════════════════════
+// FPS CAMERA
+// ══════════════════════════════════════
+let fpsYaw=Math.PI,fpsPitch=0;
+const FPS_H=1.22,FPS_SPD=3.2;
+let walkPhase=0;
+let simY=0,simVY=0,onGround=true;
+const GRAVITY=18,JUMP_FORCE=6.5;
+function applyFPS(){
+  camera.position.set(simGrp.position.x,simY+FPS_H,simGrp.position.z);
+  camera.rotation.order='YXZ';camera.rotation.y=fpsYaw;camera.rotation.x=fpsPitch;
+}
+
+// ══════════════════════════════════════
+// COLLISION — окремо стіни і меблі
+// ══════════════════════════════════════
+// wallSolid: Set of AABB {minX,maxX,minZ,maxZ}
+const wallSolid=[];
+const furnSolid=new Set(); // "gx,gz"
+
+function addWallSolid(data,gx,gz,rot){
+  const T2=WALL_T/2;
+  if(rot===0){
+    // E-W wall at z=gz, spans x=gx..gx+1
+    wallSolid.push({minX:gx,maxX:gx+1,minZ:gz-T2,maxZ:gz+T2});
+  } else {
+    // N-S wall at x=gx+1, spans z=gz..gz+1
+    wallSolid.push({minX:gx+1-T2,maxX:gx+1+T2,minZ:gz,maxZ:gz+1});
+  }
+}
+
+function tryMove(px,pz,dx,dz){
+  const R=0.28;
+  let nx=px+dx, nz=pz+dz;
+
+  // Check walls (AABB precise)
+  for(const w of wallSolid){
+    // X axis
+    if(nx+R>w.minX&&nx-R<w.maxX&&pz+R>w.minZ&&pz-R<w.maxZ) nx=px;
+  }
+  for(const w of wallSolid){
+    // Z axis
+    if(nx+R>w.minX&&nx-R<w.maxX&&nz+R>w.minZ&&nz-R<w.maxZ) nz=pz;
+  }
+
+  // Check furniture cells
+  for(const key of furnSolid){
+    const [cx,cz]=key.split(',').map(Number);
+    if(nx+R>cx&&nx-R<cx+1&&pz+R>cz&&pz-R<cz+1) nx=px;
+  }
+  for(const key of furnSolid){
+    const [cx,cz]=key.split(',').map(Number);
+    if(nx+R>cx&&nx-R<cx+1&&nz+R>cz&&nz-R<cz+1) nz=pz;
+  }
+
+  return{x:Math.max(-7.7,Math.min(7.7,nx)),z:Math.max(-7.7,Math.min(7.7,nz))};
+}
+
+// ══════════════════════════════════════
+// INPUT
+// ══════════════════════════════════════
+const jWrap=document.getElementById('jWrap');
+const jKnob=document.getElementById('jKnob');
+const lookZone=document.getElementById('lookZone');
+const joy={on:false,id:-1,dx:0,dy:0,bx:0,by:0};
+const lk ={on:false,id:-1,lx:0,ly:0};
+const keys={};
+let orbitDrag=false,orbitLast=null,pinchD=0,mlook=false;
+
+jWrap.addEventListener('touchstart',e=>{e.preventDefault();if(joy.on)return;const t=e.changedTouches[0],r=jWrap.getBoundingClientRect();joy.on=true;joy.id=t.identifier;joy.bx=r.left+r.width/2;joy.by=r.top+r.height/2;joy.dx=0;joy.dy=0;},{passive:false});
+jWrap.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier!==joy.id)continue;const MAX=36,dx=t.clientX-joy.bx,dy=t.clientY-joy.by,l=Math.min(Math.sqrt(dx*dx+dy*dy),MAX),a=Math.atan2(dy,dx);joy.dx=Math.cos(a)*l/MAX;joy.dy=Math.sin(a)*l/MAX;jKnob.style.left=(33+Math.cos(a)*l)+'px';jKnob.style.top=(33+Math.sin(a)*l)+'px';}},{passive:false});
+const jEnd=e=>{for(const t of e.changedTouches){if(t.identifier===joy.id){joy.on=false;joy.dx=0;joy.dy=0;jKnob.style.left='33px';jKnob.style.top='33px';}}};
+jWrap.addEventListener('touchend',jEnd,{passive:true});jWrap.addEventListener('touchcancel',jEnd,{passive:true});
+
+lookZone.addEventListener('touchstart',e=>{e.preventDefault();if(lk.on)return;const t=e.changedTouches[0];lk.on=true;lk.id=t.identifier;lk.lx=t.clientX;lk.ly=t.clientY;},{passive:false});
+lookZone.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier!==lk.id)continue;fpsYaw-=(t.clientX-lk.lx)*0.0045;fpsPitch=Math.max(-0.88,Math.min(0.88,fpsPitch-(t.clientY-lk.ly)*0.0045));lk.lx=t.clientX;lk.ly=t.clientY;}},{passive:false});
+const lkEnd=e=>{for(const t of e.changedTouches){if(t.identifier===lk.id)lk.on=false;}};
+lookZone.addEventListener('touchend',lkEnd,{passive:true});lookZone.addEventListener('touchcancel',lkEnd,{passive:true});
+
+window.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(e.code==='Space'&&mode==='live'&&onGround){simVY=JUMP_FORCE;onGround=false;}
+  if(e.code==='KeyR'&&mode==='build'&&activeTool){
+    const max=(activeTool.type==='wall'||activeTool.type==='door'||activeTool.type==='window')?2:4;
+    wallRot=(wallRot+1)%max;
+    updateRotBar();
+  }
+});
+
+wrap.addEventListener('mousedown',e=>{if(mode==='live'){mlook=true;return;}orbitLast={x:e.clientX,y:e.clientY};orbitDrag=false;});
+wrap.addEventListener('mousemove',e=>{
+  if(mode==='live'&&mlook){fpsYaw-=e.movementX*0.003;fpsPitch=Math.max(-0.88,Math.min(0.88,fpsPitch-e.movementY*0.003));return;}
+  if(!orbitLast||!(e.buttons&1))return;
+  const dx=e.clientX-orbitLast.x,dy=e.clientY-orbitLast.y;
+  if(Math.abs(dx)+Math.abs(dy)>3)orbitDrag=true;
+  oTheta-=dx*0.006;oPhi=Math.max(0.12,Math.min(1.45,oPhi-dy*0.006));
+  orbitLast={x:e.clientX,y:e.clientY};applyOrbit();
+});
+wrap.addEventListener('mouseup',e=>{if(mode==='live'){mlook=false;return;}if(!orbitDrag)tapBuild(e.clientX,e.clientY);orbitLast=null;orbitDrag=false;});
+wrap.addEventListener('wheel',e=>{if(mode==='live')return;oR=Math.max(4,Math.min(28,oR+e.deltaY*0.018));applyOrbit();});
+wrap.addEventListener('touchstart',e=>{if(mode==='live')return;if(e.touches.length===2){pinchD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);return;}orbitLast={x:e.touches[0].clientX,y:e.touches[0].clientY};orbitDrag=false;},{passive:true});
+wrap.addEventListener('touchmove',e=>{if(mode==='live')return;e.preventDefault();if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);oR=Math.max(4,Math.min(28,oR*(pinchD/d)));pinchD=d;applyOrbit();return;}if(!orbitLast)return;const dx=e.touches[0].clientX-orbitLast.x,dy=e.touches[0].clientY-orbitLast.y;if(Math.abs(dx)+Math.abs(dy)>5)orbitDrag=true;oTheta-=dx*0.007;oPhi=Math.max(0.12,Math.min(1.45,oPhi-dy*0.007));orbitLast={x:e.touches[0].clientX,y:e.touches[0].clientY};applyOrbit();},{passive:false});
+wrap.addEventListener('touchend',e=>{if(mode==='live')return;if(!orbitDrag&&e.changedTouches.length===1)tapBuild(e.changedTouches[0].clientX,e.changedTouches[0].clientY);orbitLast=null;orbitDrag=false;},{passive:true});
+
+const rc=new THREE.Raycaster();const mp=new THREE.Vector2();
+
+function getRayHit(cx,cy){
+  const rect=canvas.getBoundingClientRect();
+  mp.set(((cx-rect.left)/rect.width)*2-1,-((cy-rect.top)/rect.height)*2+1);
+  rc.setFromCamera(mp,camera);
+  const hits=rc.intersectObjects([gnd,plot]);
+  return hits.length?hits[0].point:null;
+}
+
+// Corner snap: returns nearest grid corner (integer coords)
+function snapCorner(pt){
+  return{gx:Math.round(pt.x),gz:Math.round(pt.z)};
+}
+
+// Wall snap: snaps to nearest grid edge based on rotation
+function snapWallEdge(pt,rot){
+  if(rot===0){
+    // E-W wall at z=gz: snap Z to nearest integer
+    return{gx:Math.floor(pt.x), gz:Math.round(pt.z)};
+  } else {
+    // N-S wall at x=gx+1: snap X to nearest integer → gx = round(x)-1
+    return{gx:Math.round(pt.x)-1, gz:Math.floor(pt.z)};
+  }
+}
+
+function tapBuild(cx,cy){
+  if(!activeTool&&activeCat!=='move')return;
+  const pt=getRayHit(cx,cy);
+  if(!pt)return;
+
+  // ── MOVE MODE ──
+  if(activeCat==='move'){
+    if(!moveSelected){
+      // First tap: pick object under cursor
+      const allMeshes=[];
+      Object.entries(objL).forEach(([k,o])=>{
+        if(o.mesh instanceof THREE.Group) o.mesh.children.forEach(c=>{if(c.isMesh)allMeshes.push({mesh:c,key:k,layer:'furn'});});
+        else allMeshes.push({mesh:o.mesh,key:k,layer:'furn'});
+      });
+      Object.entries(wallL).forEach(([k,w])=>{
+        if(w.mesh instanceof THREE.Group) w.mesh.children.forEach(c=>{if(c.isMesh)allMeshes.push({mesh:c,key:k,layer:'wall'});});
+        else allMeshes.push({mesh:w.mesh,key:k,layer:'wall'});
+      });
+      rc.setFromCamera(mp,camera);
+      const objHits=rc.intersectObjects(allMeshes.map(a=>a.mesh),false);
+      if(objHits.length){
+        const hitMesh=objHits[0].object;
+        const found=allMeshes.find(a=>a.mesh===hitMesh);
+        if(found){
+          const key=found.key;
+          const layer=found.layer;
+          const entry=layer==='furn'?objL[key]:wallL[key];
+          moveSelected={key,layer,data:{...entry.data},rot:entry.rot,
+            gx:layer==='furn'?entry.gx:parseInt(key.split(',')[0]),
+            gz:parseInt(key.split(',')[1])};
+          // Highlight selected mesh
+          if(moveGhost){scene.remove(moveGhost);moveGhost=null;}
+          const bbox=new THREE.Box3().setFromObject(entry.mesh);
+          const size=bbox.getSize(new THREE.Vector3());
+          const ghost=new THREE.Mesh(
+            new THREE.BoxGeometry(size.x,size.y,size.z),
+            new THREE.MeshStandardMaterial({color:0xfbbf24,transparent:true,opacity:0.45,wireframe:false})
+          );
+          const center=bbox.getCenter(new THREE.Vector3());
+          ghost.position.copy(center);
+          scene.add(ghost); moveGhost=ghost;
+          toast('✋ Обрано: '+entry.data.ic+' '+entry.data.lbl+' — тапни куди перенести','#fbbf24');
+          return;
+        }
+      }
+      toast('✋ Тапни на предмет щоб обрати','#a78bfa');
+      return;
+    }
+
+    // Second tap: move to new position
+    const {data,rot,layer}=moveSelected;
+    let ngx,ngz;
+    if(layer==='wall'){
+      const snapped=snapWallEdge(pt,rot);
+      ngx=snapped.gx; ngz=snapped.gz;
+    } else {
+      ngx=Math.floor(pt.x); ngz=Math.floor(pt.z);
+    }
+
+    // Remove from old position (free — no refund, no cost)
+    const oldKey=moveSelected.key;
+    if(layer==='furn'){
+      if(objL[oldKey]){scene.remove(objL[oldKey].mesh);furnSolid.delete(oldKey);delete objL[oldKey];}
+    } else {
+      if(wallL[oldKey]){
+        scene.remove(wallL[oldKey].mesh);
+        const wi=wallSolid.indexOf(wallL[oldKey].solid);
+        if(wi!==-1)wallSolid.splice(wi,1);
+        delete wallL[oldKey];
+      }
+    }
+    if(moveGhost){scene.remove(moveGhost);moveGhost=null;}
+    moveSelected=null;
+
+    // Place at new position (free)
+    placeItem(ngx,ngz,data,rot,true);
+    toast('✅ Переміщено!','#4ade80');
+    return;
+  }
+
+  // ── ROTATE MODE ──
+  if(activeCat==='rotate'){
+    // Pick any object/wall under cursor
+    const allMeshes=[];
+    Object.entries(objL).forEach(([k,o])=>{
+      const meshes=o.mesh instanceof THREE.Group?o.mesh.children:[o.mesh];
+      meshes.forEach(c=>{if(c.isMesh)allMeshes.push({mesh:c,key:k,layer:'furn'});});
+    });
+    Object.entries(wallL).forEach(([k,w])=>{
+      const meshes=w.mesh instanceof THREE.Group?w.mesh.children:[w.mesh];
+      meshes.forEach(c=>{if(c.isMesh)allMeshes.push({mesh:c,key:k,layer:'wall'});});
+    });
+    rc.setFromCamera(mp,camera);
+    const objHits=rc.intersectObjects(allMeshes.map(a=>a.mesh),false);
+    if(objHits.length){
+      const found=allMeshes.find(a=>a.mesh===objHits[0].object);
+      if(found){
+        rotateSelected={key:found.key,layer:found.layer};
+        const ent=found.layer==='furn'?objL[found.key]:wallL[found.key];
+        toast('🔄 Обрано: '+ent.data.ic+' '+ent.data.lbl+' — натисни Повернути','#a855f7');
+        buildUI();
+        return;
+      }
+    }
+    toast('🔄 Тапни на предмет щоб обрати','#a78bfa');
+    return;
+  }
+  const isWall=activeTool.type==='wall'||activeTool.type==='door'||activeTool.type==='window';
+  let gx,gz;
+  if(isWall){
+    const s=snapWallEdge(pt,wallRot);
+    gx=s.gx; gz=s.gz;
+  } else {
+    gx=Math.floor(pt.x); gz=Math.floor(pt.z);
+  }
+  if(activeTool.type==='erase'){eraseCell(gx,gz);return;}
+  placeItem(gx,gz,activeTool,wallRot);
+}
+
+// ══════════════════════════════════════
+// FPS UPDATE
+// ══════════════════════════════════════
+function updateFPS(dt){
+  // joy: up=dy<0 (forward), down=dy>0 (back), left=dx<0, right=dx>0
+  let mx=joy.dx, mz=joy.dy;
+  if(keys['KeyW']||keys['ArrowUp'])    mz=-1;
+  if(keys['KeyS']||keys['ArrowDown'])  mz= 1;
+  if(keys['KeyA']||keys['ArrowLeft'])  mx=-1;
+  if(keys['KeyD']||keys['ArrowRight']) mx= 1;
+  if(mx!==0||mz!==0){
+    const spd=FPS_SPD*dt;
+    // Forward direction based on yaw (camera facing)
+    const sinY=Math.sin(fpsYaw), cosY=Math.cos(fpsYaw);
+    // mz<0 = forward = camera looks along (-sinY, 0, -cosY) in world space
+    const moveX = -sinY * (-mz) * spd + cosY * mx * spd;
+    const moveZ = -cosY * (-mz) * spd - sinY * mx * spd;
+    const res=tryMove(simGrp.position.x,simGrp.position.z,moveX,moveZ);
+    simGrp.position.x=res.x; simGrp.position.z=res.z;
+    simGrp.rotation.y=fpsYaw+Math.PI;
+    walkPhase+=dt*9;
+    simGrp.getObjectByName('leg0').rotation.x= Math.sin(walkPhase)*0.55;
+    simGrp.getObjectByName('leg1').rotation.x=-Math.sin(walkPhase)*0.55;
+    simGrp.getObjectByName('arm0').rotation.x=-Math.sin(walkPhase)*0.35;
+    simGrp.getObjectByName('arm1').rotation.x= Math.sin(walkPhase)*0.35;
+  } else {
+    walkPhase+=dt*1.5; torso.position.y=0.82+Math.sin(walkPhase)*0.012;
+  }
+  // Jump physics
+  simVY-=GRAVITY*dt;
+  simY+=simVY*dt;
+  if(simY<=0){simY=0;simVY=0;onGround=true;}
+  simGrp.position.y=simY;
+  applyFPS();
+  // Nearby
+  let nb=null,bd=1.9;
+  Object.values(objL).forEach(o=>{if(!o.data.need)return;const dx=o.gx+0.5-simGrp.position.x,dz=o.gz+0.5-simGrp.position.z,d=Math.sqrt(dx*dx+dz*dz);if(d<bd){bd=d;nb=o;}});
+  const nl=document.getElementById('nearbyLbl'),ib=document.getElementById('interactBtn');
+  if(nb){nl.textContent=nb.data.ic+' '+nb.data.lbl;nl.style.display='block';ib.style.display='flex';ib.onclick=()=>{simAction={...nb.data};simActionTimer=nb.data.val/8+1.5;toast(nb.data.ic+' Використовую...','#a855f7');};}
+  else{nl.style.display='none';ib.style.display='none';}
+  // Action
+  if(simAction&&simActionTimer>0){simActionTimer-=dt*gameSpeed;if(simAction.need)needs[simAction.need]=Math.min(100,needs[simAction.need]+dt*gameSpeed*simAction.val*0.22);if(simActionTimer<=0){simAction=null;toast('✅ Потребу задоволено!','#4ade80');}}
+}
+
+// ── ROTATE SELECTED ITEM ──
+function doRotate(){
+  if(!rotateSelected)return;
+  const {key,layer}=rotateSelected;
+  const ent=layer==='furn'?objL[key]:wallL[key];
+  if(!ent){rotateSelected=null;buildUI();return;}
+
+  const isWall=layer==='wall';
+  const maxRot=isWall?2:4;
+  const newRot=(ent.rot+1)%maxRot;
+  const data={...ent.data};
+  const [gx,gz]=key.split(',').map(Number);
+
+  // Remove old mesh + solid
+  scene.remove(ent.mesh);
+  if(layer==='furn'){
+    furnSolid.delete(key);
+    delete objL[key];
+  } else {
+    const wi=wallSolid.indexOf(ent.solid);
+    if(wi!==-1)wallSolid.splice(wi,1);
+    delete wallL[key];
+  }
+
+  // Place with new rotation (free, same cell)
+  placeItem(gx,gz,data,newRot,true);
+
+  // rotateSelected key stays the same (same gx,gz)
+  rotateSelected={key,layer};
+
+  const dirs=['↑ Північ','→ Схід','↓ Південь','← Захід'];
+  const wallDirs=['↔ Схід-Захід','↕ Північ-Південь'];
+  toast('🔄 '+(isWall?wallDirs[newRot]:dirs[newRot]),'#a855f7');
+  buildUI();
+}
+
+// ══════════════════════════════════════
+// UI
+// ══════════════════════════════════════
+function buildUI(){
+  const ce=document.getElementById('cats');
+  while(ce.children.length>1) ce.removeChild(ce.lastChild);
+  CATS.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='cat'+(activeCat===c.id?' on':'');
+    el.textContent=c.lbl;
+    el.onclick=()=>{
+      activeCat=c.id; activeTool=null; wallRot=0;
+      if(moveGhost){scene.remove(moveGhost);moveGhost=null;}
+      moveSelected=null;
+      rotateSelected=null;
+      updateRotBar(); buildUI();
+    };
+    ce.appendChild(el);
+  });
+  const ie=document.getElementById('items'); ie.innerHTML='';
+  if(activeCat==='move'){
+    const hint=document.createElement('div');
+    hint.style.cssText='color:#fbbf24;font-size:11px;padding:6px 14px;align-self:center;white-space:nowrap;flex-shrink:0';
+    hint.textContent='1️⃣ Тапни на предмет  →  2️⃣ Тапни куди перенести';
+    ie.appendChild(hint);
+    const cancel=document.createElement('div');
+    cancel.className='itm';
+    cancel.innerHTML='<span class="ic">🚫</span><span>Скасувати</span>';
+    cancel.onclick=()=>{if(moveGhost){scene.remove(moveGhost);moveGhost=null;}moveSelected=null;toast('Скасовано','#a78bfa');};
+    ie.appendChild(cancel);
+    return;
+  }
+  if(activeCat==='rotate'){
+    const hint=document.createElement('div');
+    hint.style.cssText='color:#a78bfa;font-size:11px;padding:6px 14px;align-self:center;white-space:nowrap;flex-shrink:0';
+    hint.textContent=rotateSelected?'Натисни 🔄 Повернути або обери інший предмет':'Тапни на предмет щоб обрати';
+    ie.appendChild(hint);
+    if(rotateSelected){
+      const rotCW=document.createElement('div');
+      rotCW.className='itm on';
+      rotCW.innerHTML='<span class="ic">🔄</span><span>Повернути</span>';
+      rotCW.onclick=doRotate;
+      ie.appendChild(rotCW);
+      const cancel=document.createElement('div');
+      cancel.className='itm';
+      cancel.innerHTML='<span class="ic">🚫</span><span>Скасувати</span>';
+      cancel.onclick=()=>{rotateSelected=null;buildUI();};
+      ie.appendChild(cancel);
+    }
+    return;
+  }
+  (CAT[activeCat]||[]).forEach(itm=>{
+    const el=document.createElement('div'); el.className='itm'+(activeTool?.id===itm.id?' on':'');
+    el.innerHTML=`<span class="ic">${itm.ic}</span><span class="lblw"><span>${itm.lbl}</span>${itm.cost?`<span class="pr">💰${itm.cost}</span>`:''}</span>`;
+    el.onclick=()=>{activeTool=activeTool?.id===itm.id?null:itm; wallRot=0; updateRotBar(); buildUI();};
+    ie.appendChild(el);
+  });
+}
+buildUI();
+
+// 4-direction rotation labels
+const rotLabels=['↑ Північ (0°)','→ Схід (90°)','↓ Південь (180°)','← Захід (270°)'];
+const wallRotLabels=['↔ Схід-Захід','↕ Північ-Південь'];
+
+function updateRotBar(){
+  const rb=document.getElementById('rotBar');
+  if(!activeTool||activeTool.type==='floor'||activeCat==='move'||activeCat==='rotate'){rb.style.display='none';return;}
+  rb.style.display='flex';
+  const isWall=activeTool.type==='wall'||activeTool.type==='door'||activeTool.type==='window';
+  const isErase=activeTool.type==='erase';
+  document.getElementById('rotBtn').disabled=isErase;
+  document.getElementById('rotLbl').textContent=isErase?'—':isWall?wallRotLabels[wallRot]:rotLabels[wallRot];
+}
+
+document.getElementById('jumpBtn').addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(onGround){simVY=JUMP_FORCE;onGround=false;}
+},{passive:false});
+document.getElementById('jumpBtn').addEventListener('click',()=>{
+  if(onGround){simVY=JUMP_FORCE;onGround=false;}
+});
+
+document.getElementById('rotBtn').addEventListener('click',()=>{
+  if(!activeTool||activeTool.type==='erase')return;
+  const max=(activeTool.type==='wall'||activeTool.type==='door'||activeTool.type==='window')?2:4;
+  wallRot=(wallRot+1)%max;
+  updateRotBar();
+});
+
+document.getElementById('modeBtn').addEventListener('click',()=>{
+  mode=mode==='build'?'live':'build';
+  const live=mode==='live';
+  document.getElementById('modeBtn').textContent=live?'🔨\nБуд.':'👁️\nFPS';
+  document.getElementById('tb').style.display=live?'none':'flex';
+  document.getElementById('rotBar').style.display='none';
+  grid.visible=!live;
+  jWrap.style.display=live?'block':'none';
+  lookZone.style.display=live?'block':'none';
+  document.getElementById('crosshair').style.display=live?'block':'none';
+  document.getElementById('jumpBtn').style.display=live?'flex':'none';
+  simGrp.visible=!live;
+  if(live){
+    fpsYaw=Math.PI;fpsPitch=0;
+    toast('🕹️ Ліво=рух  Право=погляд  ⬆=стрибок  🤝=взаємодія','#a855f7');
+  } else {
+    applyOrbit();
+    toast('🔨 Режим будівництва','#4ade80');
+  }
+});
+
+function updateNeeds(dt){
+  if(mode!=='live')return;
+  const r=dt*gameSpeed;
+  needs.hunger=Math.max(0,needs.hunger-r*0.65);needs.energy=Math.max(0,needs.energy-r*0.32);
+  needs.hygiene=Math.max(0,needs.hygiene-r*0.42);needs.bladder=Math.max(0,needs.bladder-r*0.78);needs.happy=Math.max(0,needs.happy-r*0.22);
+  ['Hunger','Energy','Happy','Hygiene','Bladder'].forEach(n=>{const el=document.getElementById('n'+n);if(el)el.style.height=needs[n.toLowerCase()]+'%';});
+}
+function updateMoney(){
+  document.getElementById('moneyEl').textContent='💰\n'+(money>=1000?(money/1000).toFixed(1)+'k':money);
+  document.getElementById('simNameV').textContent=simName;
+}
+function updateTime(dt){
+  gameMin+=dt*gameSpeed*18;if(gameMin>=60){gameMin-=60;gameHour++;}if(gameHour>=24){gameHour=0;gameDay++;}
+  const t=(gameHour+gameMin/60)/24,night=t<0.22||t>0.82,dawn=!night&&(t<0.27||t>0.78);
+  if(night){sun.intensity=0.08;ambL.intensity=0.28;warmPt.intensity=1.0;scene.background.set(0x06080f);scene.fog.color.set(0x06080f);}
+  else if(dawn){sun.intensity=0.55;ambL.intensity=0.45;warmPt.intensity=0.75;scene.background.set(0xffa060);scene.fog.color.set(0xffa060);}
+  else{sun.intensity=1.1;ambL.intensity=0.55;warmPt.intensity=0.5;scene.background.set(0x87ceeb);scene.fog.color.set(0x87ceeb);}
+  document.getElementById('clk').textContent='🕐 День '+gameDay+' · '+String(Math.floor(gameHour)).padStart(2,'0')+':'+String(Math.floor(gameMin)).padStart(2,'0');
+}
+let toastT;
+function toast(msg,bg='#4ade80'){const el=document.getElementById('toast');el.textContent=msg;el.style.background=bg;el.style.color=bg==='#4ade80'?'#0a1a0a':'#fff';el.style.opacity='1';clearTimeout(toastT);toastT=setTimeout(()=>el.style.opacity='0',2500);}
+
+// ══════════════════════════════════════
+// STARTER HOME
+// ══════════════════════════════════════
+function buildStarter(){
+  const F=(gx,gz,data,rot=0)=>placeItem(gx,gz,data,rot,true);
+  // Floors (8x8 room: x=-4..3, z=-4..3)
+  for(let z=-4;z<4;z++)for(let x=-4;x<4;x++){
+    const f=(x>=1&&z<0)?CAT.floors[1]:(x>=1&&z>=0&&z<3)?CAT.floors[1]:(x<=-1&&z<=-1)?CAT.floors[2]:CAT.floors[0];
+    F(x,z,f);
+  }
+
+  // Outer walls:
+  // rot 0 (E-W): wall at z=gz. South border: gz=-4, North border: gz=3
+  // rot 1 (N-S): wall at x=gx+1. West border: gx=-5 → x=-4. East border: gx=3 → x=4
+  for(let x=-4;x<4;x++){
+    F(x,-4,CAT.build[0],0);  // south wall (z=-4)
+    F(x, 3,CAT.build[0],0);  // north wall (z=3)
+  }
+  for(let z=-4;z<4;z++){
+    F(-5,z,CAT.build[0],1);  // west wall  (x=-4)
+    F( 3,z,CAT.build[0],1);  // east wall  (x=4)
+  }
+
+  // Interior divider: bedroom/living (N-S wall at x=0, gx=-1)
+  for(let z=-4;z<4;z++) if(z!==0) F(-1,z,CAT.build[0],1);
+  F(-1,0,CAT.build[4],1); // door at x=0
+
+  // Interior divider: kitchen/bath from living (E-W wall at z=-1)
+  for(let x=0;x<4;x++) if(x!==1) F(x,-1,CAT.build[0],0);
+  F(1,-1,CAT.build[4],0); // door
+
+  // Front door + windows
+  F(1,3,CAT.build[4],0);           // front door (north wall)
+  F(-2,-4,CAT.build[5],0);F(2,-4,CAT.build[5],0); // south windows
+  F(-5,1,CAT.build[5],1);F(3,1,CAT.build[5],1);   // side windows
+
+  // Bedroom furniture
+  F(-3,-3,CAT.bedroom[1],0);F(-3,-1,CAT.bedroom[2],1);
+  F(-1,-3,CAT.bedroom[4],0);F(-2,-3,CAT.bedroom[5],0);
+
+  // Living room
+  F(-3,1,CAT.living[0],0);F(-1,2,CAT.living[2],0);
+  F(-1,2,CAT.living[1],0);F(-3,2,CAT.living[3],1);F(-2,1,CAT.living[4],0);
+
+  // Kitchen
+  F(1,-3,CAT.kitchen[0],0);F(2,-3,CAT.kitchen[1],0);F(3,-3,CAT.kitchen[2],0);
+  F(1,-2,CAT.kitchen[4],0);F(2,-2,CAT.kitchen[5],0);F(3,-2,CAT.kitchen[5],0);
+
+  // Bathroom
+  F(1,0,CAT.bath[0],0);F(2,0,CAT.bath[1],0);F(3,0,CAT.bath[3],1);F(1,1,CAT.bath[2],0);
+
+  // Deco
+  F(-4,-4,CAT.deco[0],0);F(2,3,CAT.deco[0],0);F(-4,3,CAT.deco[0],0);
+  F(-2,1,CAT.deco[3],0);F(-3,0,CAT.deco[2],0);
+}
+
+// ══════════════════════════════════════
+// LOOP
+// ══════════════════════════════════════
+function loop(){
+  requestAnimationFrame(loop);
+  const now=Date.now(),dt=Math.min((now-lastTick)/1000,0.1);lastTick=now;
+  updateTime(dt);updateNeeds(dt);
+  if(mode==='live')updateFPS(dt);
+  renderer.render(scene,camera);
+}
+
+document.getElementById('goBtn').addEventListener('click',()=>{
+  simName=document.getElementById('nameIn').value.trim()||'Олексій';
+  const old=simGrp.getObjectByName('nsp'); if(old)simGrp.remove(old);
+  simGrp.add(makeSprite(simName));
+  document.getElementById('modal').classList.add('h');
+  buildStarter();
+  simGrp.position.set(1.5,0,5.5);fpsYaw=Math.PI;
+  updateMoney();applyOrbit();
+  toast('🏠 Ласкаво просимо, '+simName+'!','#a855f7');
+  loop();
+});
+
+// ══════════════════════════════════════
+// PWA — SERVICE WORKER + INSTALL BANNER
+// ══════════════════════════════════════
+// Inline Service Worker via blob
+const swCode=`
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open('simsua-v1').then(c=>c.addAll([location.href])));
+  self.skipWaiting();
+});
+self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
+self.addEventListener('fetch',e=>{
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+    const clone=res.clone();
+    caches.open('simsua-v1').then(c=>c.put(e.request,clone));
+    return res;
+  })));
+});
+`;
+if('serviceWorker' in navigator){
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  const swUrl=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl,{scope:'./'}).catch(()=>{});
+}
+
+// Install banner
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  showInstallBanner();
+});
+function showInstallBanner(){
+  const b=document.createElement('div');
+  b.id='installBanner';
+  b.style.cssText='position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1e0f3a,#2d1258);border-top:1px solid #6d28d9;padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:500;backdrop-filter:blur(8px)';
+  b.innerHTML=`
+    <span style="font-size:22px">🏠</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;color:#c084fc">Встановити СімУА 3D</div>
+      <div style="font-size:11px;color:#6b5a88">Грай як справжній додаток</div>
+    </div>
+    <button id="installYes" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">📲 Встановити</button>
+    <button id="installNo" style="background:rgba(255,255,255,.08);border:1px solid #3a2858;color:#a78bfa;padding:8px 12px;border-radius:10px;font-size:12px;cursor:pointer">✕</button>
+  `;
+  document.body.appendChild(b);
+  document.getElementById('installYes').onclick=async()=>{
+    if(deferredPrompt){await deferredPrompt.prompt();deferredPrompt=null;}
+    b.remove();
+  };
+  document.getElementById('installNo').onclick=()=>b.remove();
+}
+// If already installed or no prompt, show manual instructions button
+window.addEventListener('load',()=>{
+  if(window.matchMedia('(display-mode:fullscreen)').matches||
+     window.matchMedia('(display-mode:standalone)').matches) return; // already installed
+  setTimeout(()=>{
+    if(!deferredPrompt&&!document.getElementById('installBanner')){
+      showManualInstallHint();
+    }
+  },3000);
+});
+function showManualInstallHint(){
+  const b=document.createElement('div');
+  b.style.cssText='position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1e0f3a,#2d1258);border-top:1px solid #6d28d9;padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:500';
+  b.innerHTML=`
+    <span style="font-size:20px">📲</span>
+    <div style="flex:1;font-size:11px;color:#a78bfa;line-height:1.5">
+      Щоб встановити: натисни <b style="color:#c084fc">⋮</b> у Chrome → <b style="color:#c084fc">"Додати на головний екран"</b>
+    </div>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#6b5a88;font-size:18px;cursor:pointer;padding:4px">✕</button>
+  `;
+  document.body.appendChild(b);
+  setTimeout(()=>b?.remove(),8000);
+}
+</script>
+</body>
+</html>
